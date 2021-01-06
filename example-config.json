@@ -1,0 +1,11 @@
+{
+  "serve_addr": ":8080",
+  "health_checks": {
+    "bad": {
+      "url": "http://localhost/invalid"
+    },
+    "self_this_is_dangerous": {
+      "url": "http://localhost:8080/metrics"
+    }
+  }
+}
