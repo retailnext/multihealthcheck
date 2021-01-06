@@ -2,7 +2,7 @@
 
 `multihealthcheck` is a health check aggregator.
 
-When `multihealtcheck` receives an http request, it makes parallel requests in
+When `multihealthcheck` receives an http request, it makes parallel requests in
 turn to the configured http/https health check targets. If all the defined
 health checks are OK, it returns a 200 OK. Otherwise, it returns a 500 DOWN.
 
@@ -27,4 +27,4 @@ an afternoon building something similar.
 This project is licensed under the [Apache License, Version 2.0](LICENSE).
 
 Please include a `Signed-off-by` in all commits, per
-[Developer Certificate of Origin version 1.1](DCO.html).
+[Developer Certificate of Origin version 1.1](DCO).
