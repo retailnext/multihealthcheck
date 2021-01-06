@@ -38,9 +38,10 @@ func makeTestServeMux() *http.ServeMux {
 }
 
 type checkerTestCase struct {
-	URL     string
-	Timeout time.Duration
-	Error   error
+	URL            string
+	Timeout        time.Duration
+	ExpectError    error
+	ExpectAnyError bool
 }
 
 func (tc checkerTestCase) ctx() (context.Context, context.CancelFunc) {
@@ -48,6 +49,23 @@ func (tc checkerTestCase) ctx() (context.Context, context.CancelFunc) {
 		return context.WithTimeout(context.Background(), 1*time.Second)
 	}
 	return context.WithTimeout(context.Background(), tc.Timeout)
+}
+
+func (tc checkerTestCase) checkError(t *testing.T, actual error) {
+	t.Helper()
+	if actual == nil {
+		if tc.ExpectError != nil {
+			t.Fatal("expected error but got nil")
+		}
+		return
+	}
+	if tc.ExpectAnyError {
+		return
+	}
+	if errors.Is(actual, tc.ExpectError) {
+		return
+	}
+	t.Fatalf("unexpected error: %+v", actual)
 }
 
 func TestChecker(t *testing.T) {
@@ -61,26 +79,24 @@ func TestChecker(t *testing.T) {
 	})
 
 	cases := map[string]checkerTestCase{
-		"DeadlineExceeded": {
-			URL:     "https://127.255.255.255:255/../",
-			Timeout: 1 * time.Millisecond,
-			Error:   context.DeadlineExceeded,
+		"ConnectionError": {
+			URL:            "https://127.255.255.255:255/../",
+			Timeout:        1 * time.Millisecond,
+			ExpectAnyError: true,
 		},
 		"Plain200": {
-			URL:   plainServer.URL + "/200",
-			Error: nil,
+			URL: plainServer.URL + "/200",
 		},
 		"Plain500": {
-			URL:   plainServer.URL + "/500",
-			Error: non2xxStatusCode(500),
+			URL:         plainServer.URL + "/500",
+			ExpectError: non2xxStatusCode(500),
 		},
 		"TLS200": {
-			URL:   tlsServer.URL + "/200",
-			Error: nil,
+			URL: tlsServer.URL + "/200",
 		},
 		"TLS500": {
-			URL:   tlsServer.URL + "/500",
-			Error: non2xxStatusCode(500),
+			URL:         tlsServer.URL + "/500",
+			ExpectError: non2xxStatusCode(500),
 		},
 	}
 
@@ -90,9 +106,7 @@ func TestChecker(t *testing.T) {
 			defer cancel()
 			chk := newGetChecker(cases[name].URL)
 			result := chk.doCheck(ctx)
-			if result != cases[name].Error && !errors.Is(result, cases[name].Error) {
-				t.Fatalf("expected %+v got %+v", cases[name].Error, result)
-			}
+			cases[name].checkError(t, result)
 		})
 	}
 }
