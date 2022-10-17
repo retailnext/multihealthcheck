@@ -1,4 +1,4 @@
-// Copyright 2021 RetailNext, Inc.
+// Copyright 2022 RetailNext, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ import (
 	"context"
 	"crypto/tls"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 )
@@ -43,7 +42,7 @@ func (c checker) doCheck(ctx context.Context) error {
 	var statusCode int
 	if response != nil {
 		if response.Body != nil {
-			_, readBodyErr = io.Copy(ioutil.Discard, response.Body)
+			_, readBodyErr = io.Copy(io.Discard, response.Body)
 			if closeBodyErr := response.Body.Close(); closeBodyErr != nil {
 				panic(closeBodyErr)
 			}
